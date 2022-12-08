@@ -1,0 +1,171 @@
+*::after, *::before, *{
+    box-sizing: border-box;
+}
+
+html{
+    height: 100%;
+}
+
+body{
+    min-height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-bar{
+    height: 75px;
+    display: flex;
+    justify-content: left;
+    border-bottom: 1px solid black; /*temp*/
+}
+
+.header-title{
+    font-size: 2rem;
+    margin-left: 5px;
+}
+
+#content{
+    flex-grow: 1; 
+    display: grid;
+    grid-template-rows: 1fr 100px;
+    grid-template-columns: minmax(150px, 300px) 1fr;
+}
+
+.sidebar{
+    padding-left: 20px;
+}
+
+.top-sidebar{
+
+}
+
+.bottom-sidebar{
+
+}
+
+.projects-container > div{
+    background-color: white;
+}
+
+.bottom-sidebar-header{
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+
+.bottom-sidebar-title{
+    margin: 0;
+}
+
+.project-listing{
+    display: flex;
+    justify-content: space-between;
+}
+
+.add-project-interface{
+    display: none;
+}
+
+.add-project-button{
+
+}
+
+.project-name-input{
+
+}
+
+.sidebar > ul{
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar > ul > li{
+    margin-bottom: 5px;
+    padding: 3px;
+    background-color: white;
+}
+
+.sidebar > ul > li:hover,
+.projects-container > .project-listing:hover{
+    filter: brightness(85%);
+    cursor: pointer;
+}
+
+.tasks-display{
+    padding-left: 30px;
+    padding-right: 30px;
+    flex-grow: 0;
+    height: fit-content;
+}
+
+.tasks > p:first-of-type{
+    font-size: 2rem;
+    margin: 0;
+}
+
+.task-container{
+    border-bottom: 1px solid black;
+}
+
+.task-info{
+
+}
+
+.task-title{
+
+}
+
+.task-description{
+
+}
+
+.task-date{
+
+}
+
+.task-priority{
+
+}
+
+.add-task-interface{
+}
+
+.add-task-form{
+    display: none; 
+}
+
+input{
+    display: block;
+}
+
+.task-buttons{
+
+}
+
+.add-task-button{
+
+}
+
+.remove-task-button{
+    
+}
+
+.edit-task-button{
+
+}
+
+.edit-task-container{
+    display: none;
+}
+
+.edit-task-buttons{
+
+}
+
+.save-edit-button{
+
+}
+
+.cancel-edit-button{
+
+}
