@@ -1,0 +1,31 @@
+{
+  "name": "todo-list",
+  "version": "1.0.0",
+  "description": "A app to keep track of multiple tasks or a collection of tasks in the form of projects.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "webpack --watch",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rkjames202/todo-list.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rkjames202/todo-list/issues"
+  },
+  "homepage": "https://github.com/rkjames202/todo-list#readme",
+  "devDependencies": {
+    "css-loader": "^6.7.2",
+    "style-loader": "^3.3.1",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.0"
+  },
+  "dependencies": {
+    "date-fns": "^2.29.3"
+  }
+}
