@@ -26,10 +26,7 @@ class List {
 
 }
 
-const toDoList = new List();
-
 export default List;
-export { toDoList };
 
         
 
