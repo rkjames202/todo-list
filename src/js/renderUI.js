@@ -2,8 +2,8 @@ export default renderUI;
 export { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, createProjectList };
 
 import { addTaskRemoveListener, addProjectListeners, addEditTaskListener, addSaveEditTaskListener, addCancelEditTaskListener } from "./listeners";
-import { Inbox, projects } from "./project";
-import { format } from "date-fns";
+import { getProjects} from "./project";
+import { format, parseJSON } from "date-fns";
 
 function renderUI(){
     const body = document.querySelector('body');
@@ -14,7 +14,7 @@ function renderUI(){
     content.appendChild(createTasksContainer());
     body.appendChild(content);
 
-    displayTasks(Inbox);
+    displayTasks(getProjects('Inbox'));
 
 }
 
@@ -72,10 +72,12 @@ function createSidebar(){
     projectsContainer.classList.add('projects-container');
 
     let projectList = createProjectList();
-    projectList.forEach((project) => {
-        projectsContainer.appendChild(project);
-    })
-
+    if(projectList){
+        projectList.forEach((project) => {
+            projectsContainer.appendChild(project);
+        });
+    }
+   
     bottomList.appendChild(projectsContainer);
 
     const addProjectButton = document.createElement('button');
@@ -102,6 +104,11 @@ function createSidebar(){
     cancelButton.classList.add('cancel-project-button');
     cancelButton.innerText = 'Cancel';
     addProjectInterface.appendChild(cancelButton);
+
+    const errorMessage = document.createElement('p');
+    errorMessage.classList.add('error-message');
+    errorMessage.innerText = 'Project names must be unique.';
+    addProjectInterface.appendChild(errorMessage);
 
     bottomList.appendChild(addProjectInterface);
 
@@ -206,71 +213,71 @@ function displayTasks(project){
     const projectTitle = document.createElement('p');
     projectTitle.innerText = project.name;
     tasksContainer.appendChild(projectTitle);
-    
-    project.tasks.list.forEach((task, index) => {
-        const currentTask = document.createElement('div');
-        currentTask.classList.add('task-container');
-        currentTask.setAttribute('data-task-id', index);
 
-        //Project task belongs to
-        if(project.name === 'Today' || project.name === 'Upcoming'){
-            const projectName = document.createElement('p');
-            projectName.innerText = task.projectName;
+        project.tasks.forEach((task, index) => {
+            const currentTask = document.createElement('div');
+            currentTask.classList.add('task-container');
+            currentTask.setAttribute('data-task-id', index);
 
-            currentTask.appendChild(projectName);
-        }
+            //Project task belongs to
+            if(project.name === 'Today' || project.name === 'Upcoming'){
+                const projectName = document.createElement('p');
+                projectName.innerText = task.projectName;
 
-        const taskInfo = document.createElement('div');
-        taskInfo.classList.add('task-info');
+                currentTask.appendChild(projectName);
+            }
 
-        //Task title
-        const taskTitle = document.createElement('p');
-        taskTitle.classList.add('task-title');
-        taskTitle.innerText = task.title;
-        taskInfo.appendChild(taskTitle);
+            const taskInfo = document.createElement('div');
+            taskInfo.classList.add('task-info');
 
-        //Task description
-        const taskDescription = document.createElement('p');
-        taskDescription.classList.add('task-description');
-        taskDescription.innerText = task.description;
-        taskInfo.appendChild(taskDescription);
+            //Task title
+            const taskTitle = document.createElement('p');
+            taskTitle.classList.add('task-title');
+            taskTitle.innerText = task.title;
+            taskInfo.appendChild(taskTitle);
 
-        //Task due date, if statement to prevent default 12/31/1969 from showing
-        if(task.dueDate){
-            const taskDueDate = document.createElement('p');
-            taskDueDate.classList.add('task-date');
+            //Task description
+            const taskDescription = document.createElement('p');
+            taskDescription.classList.add('task-description');
+            taskDescription.innerText = task.description;
+            taskInfo.appendChild(taskDescription);
 
-            taskDueDate.innerText = format(task.dueDate, 'MM/dd/yyyy');
-            taskInfo.appendChild(taskDueDate);
-        }
-        
-        //Task priority, change color of 'circle' depending on priority
-        const taskPriority = document.createElement('p');
-        taskPriority.classList.add('task-priority');
-        taskPriority.innerText = `Priority: ${task.priority}`;
-        taskInfo.appendChild(taskPriority);
+            //Task due date, if statement to prevent default 12/31/1969 from showing
+            if(task.dueDate){
+                const taskDueDate = document.createElement('p');
+                taskDueDate.classList.add('task-date');
 
-        currentTask.appendChild(taskInfo);
+                taskDueDate.innerText = format(parseJSON(task.dueDate), 'MM/dd/yyyy');
+                taskInfo.appendChild(taskDueDate);
+            }
+            
+            //Task priority, change color of 'circle' depending on priority
+            const taskPriority = document.createElement('p');
+            taskPriority.classList.add('task-priority');
+            taskPriority.innerText = `Priority: ${task.priority}`;
+            taskInfo.appendChild(taskPriority);
 
-        const taskButtons = document.createElement('div');
-        taskButtons.classList.add('task-buttons');
-        
-        const removeButton = document.createElement('button');
-        removeButton.classList.add('remove-task-button');
-        removeButton.innerText = 'Remove Task';
-        taskButtons.appendChild(removeButton);
+            currentTask.appendChild(taskInfo);
 
-        const editButton = document.createElement('button');
-        editButton.classList.add('edit-task-button');
-        editButton.innerText = 'Edit Task';
-        taskButtons.appendChild(editButton);
+            const taskButtons = document.createElement('div');
+            taskButtons.classList.add('task-buttons');
+            
+            const removeButton = document.createElement('button');
+            removeButton.classList.add('remove-task-button');
+            removeButton.innerText = 'Remove Task';
+            taskButtons.appendChild(removeButton);
 
-        currentTask.appendChild(taskButtons);
+            const editButton = document.createElement('button');
+            editButton.classList.add('edit-task-button');
+            editButton.innerText = 'Edit Task';
+            taskButtons.appendChild(editButton);
 
-        currentTask.appendChild(createEditTaskInterface(task));
+            currentTask.appendChild(taskButtons);
 
-        tasksContainer.appendChild(currentTask);
-    });
+            currentTask.appendChild(createEditTaskInterface(task));
+
+            tasksContainer.appendChild(currentTask);
+        });
 
     addTaskRemoveListener();
     addEditTaskListener();
@@ -279,15 +286,24 @@ function displayTasks(project){
 }
 
 function createProjectList(option){
+    const projectsContainer = document.querySelector('.projects-container');
+
     let projectList = [];
+    let projectsCopy;
+    
+    if(localStorage.getItem('projects')){
+        projectsCopy = getProjects('all');
+
+    } else if (option === 'clear'){
+        projectsContainer.replaceChildren();
+        return;
+
+    } else if(!localStorage.getItem('projects')){
+        return;
+    }
 
     //Create project listing for each project
-    projects.forEach((project) => {
-        if(project.name === 'Inbox' ||
-           project.name === 'Today' || 
-           project.name === 'Upcoming'){
-            return;
-        };
+    projectsCopy.forEach((project) => {
         const projectListing = document.createElement('div');
         projectListing.classList.add('project-listing');
         
@@ -303,7 +319,6 @@ function createProjectList(option){
     });
 
     if(option === 'reset'){
-        const projectsContainer = document.querySelector('.projects-container');
         projectsContainer.replaceChildren();
 
         projectList.forEach((project) => {
@@ -338,7 +353,7 @@ function createEditTaskInterface(task){
     const newDate = document.createElement('input');
     newDate.setAttribute('id', 'new-task-date');
     newDate.type = 'date';
-    if(task.dueDate) {newDate.value = format(task.dueDate, 'yyyy-MM-dd')};
+    if(task.dueDate) {newDate.value = format(parseJSON(task.dueDate), 'yyyy-MM-dd')};
 
     const newPriority = document.createElement('select');
     newPriority.setAttribute('id', 'new-task-priority');

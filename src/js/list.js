@@ -1,32 +1,29 @@
-class List {
+function initializeMethods(){
     
-    constructor(){
-        this.list = [];
-    }
-  
-    delete = (id) => {
-        this.list.splice(id, 1);
-        this.#resetIDs();
+    this.delete = (id) => {
+        this.tasks.splice(id, 1);
+        this.resetIDs();
     }
 
-    add = (task) => {
-        this.list.push(task); 
-        this.#resetIDs();
+    this.add = (task) => {
+        this.tasks.push(task); 
+        this.resetIDs();
     }
 
-    #resetIDs = () =>{
-        this.list.forEach((t, index) => {
+    this.resetIDs = () => {
+        this.tasks.forEach((t, index) => {
             t.id = index;
         });  
     }
 
-    resetList(){
-        this.list = [];
+    this.resetList = () => {
+        this.tasks = [];
     }
 
+    return this;
 }
 
-export default List;
+export { initializeMethods }
 
         
 

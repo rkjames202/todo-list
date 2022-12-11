@@ -2,11 +2,13 @@
 import Project, { Inbox, Today, Upcoming } from "./project";
 import task from "./task";
 import { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, createProjectList } from "./renderUI";
-import { projects } from "./project";
+import { getProjects, updateProjects, getProjectIndex, removeProject} from "./project";
+import { initializeMethods } from "./list";
 import { isToday, isThisWeek } from 'date-fns'
 
 export default addEventListeners;
 export { addTaskRemoveListener, addProjectListeners, addEditTaskListener, addSaveEditTaskListener, addCancelEditTaskListener };
+
 
 function addEventListeners(){
     addSidebarListeners();
@@ -17,10 +19,9 @@ function addEventListeners(){
 
 function addSidebarListeners(){
     const inbox = document.querySelector('.top-sidebar > li:nth-child(1)');
-    
 
     inbox.onclick = () => {
-        displayTasks(Inbox);
+        displayTasks(JSON.parse(localStorage.getItem('Inbox')));
         toggleTaskForm('hide');
         toggleProjectForm('hide');
         
@@ -60,18 +61,37 @@ function addTaskSubmitListener(){
         const taskDate = document.querySelector('#task-date');
         const taskPriority = document.querySelector('#task-priority');
         const projectName = document.querySelector('.tasks').getAttribute('data-project-name');
-      
+        
         let newTask = task(taskName.value, 
-                           taskDescription.value, 
-                           taskDate.valueAsDate, 
-                           taskPriority.value, 
-                           projectName);
+            taskDescription.value, 
+            taskDate.valueAsDate, 
+            taskPriority.value, 
+            projectName);
 
-        let currentProject = getProjectIndex();
 
-        projects[currentProject].tasks.add(newTask);
+        if(projectName === 'Inbox' ||
+           projectName === 'Today' ||
+           projectName == 'Upcoming'){
+            
+            let projectCopy = JSON.parse(localStorage.getItem(projectName));
+            projectCopy = initializeMethods.call(projectCopy);
 
-        displayTasks(projects[currentProject]);
+            projectCopy.add(newTask);
+            localStorage.setItem(projectName, JSON.stringify(projectCopy));
+            displayTasks(JSON.parse(localStorage.getItem(projectName)));
+
+           } else {
+             let projects = getProjects('all');
+             let projectIndex = getProjectIndex(projectName);
+
+             projects[projectIndex].add(newTask);
+
+             updateProjects(projects[projectIndex]);
+             
+             displayTasks(getProjects(projectName));
+           } 
+
+        
 
         taskName.value = '';
         taskDescription.value = '';
@@ -87,17 +107,37 @@ function addTaskSubmitListener(){
  */
 function addTaskRemoveListener(){
     const removeButtons = document.querySelectorAll('.remove-task-button'); 
-   
+
     removeButtons.forEach((button) => {
         button.onclick = () => {
-            const taskContainer = button.parentNode;
-            const projectIndex = getProjectIndex();
+        const taskContainer = button.parentNode.parentNode;
+
+        let projectName = document.querySelector('.tasks').getAttribute('data-project-name');
+        let taskID = taskContainer.getAttribute('data-task-id');
             
-            let taskID = taskContainer.getAttribute('data-task-id');
-    
-            projects[projectIndex].tasks.delete(taskID);
+        let projectCopy;
+
+            if(projectName === 'Inbox' || 
+               projectName === 'Today' || 
+               projectName === 'Upcoming'){
+
+                projectCopy = getProjects(projectName);
+                projectCopy.delete(taskID);
+                updateProjects(projectCopy);
+                
+                displayTasks(getProjects(projectName));
+
+            } else {
+
+                projectCopy = getProjects(projectName); 
+                projectCopy.delete(taskID);
+                updateProjects(projectCopy);
+
+                displayTasks(getProjects(projectName));
+            }
+                 
+
             
-            displayTasks(projects[projectIndex]);
 
             toggleProjectForm('hide');
         }
@@ -172,26 +212,46 @@ function toggleEditTaskContainers(thisContainer){
 }
 
 function addSaveEditTaskListener(){
+    let projectsCopy;
+
     const saveEditButtons = document.querySelectorAll('.save-edit-button');
 
     saveEditButtons.forEach((button) => {
         button.onclick = () => {
-            const currentProject = getProjectIndex();
-            const taskId = button.parentNode.parentNode.parentNode.getAttribute('data-task-id');
+            let projectName = document.querySelector('.tasks').getAttribute('data-project-name');
             
-            const newName = document.querySelector('#new-task-name').value;
-            const newDescription = document.querySelector('#new-task-description').value;
-            const newDate = document.querySelector('#new-task-date').valueAsDate;
-            const newPriority = document.querySelector('#new-task-priority').value;
+            const taskContainer = button.parentNode.parentNode.parentNode;
+            const taskId = taskContainer.getAttribute('data-task-id');
 
-            console.log(projects[currentProject].tasks.list[taskId]);
-
-            projects[currentProject].tasks.list[taskId].title = newName;
-            projects[currentProject].tasks.list[taskId].description = newDescription;
-            projects[currentProject].tasks.list[taskId].dueDate = newDate;
-            projects[currentProject].tasks.list[taskId].priority = newPriority;
+            const newName = taskContainer.querySelector('#new-task-name').value;
+            const newDescription = taskContainer.querySelector('#new-task-description').value;
+            const newDate = taskContainer.querySelector('#new-task-date').valueAsDate ;
+            const newPriority = taskContainer.querySelector('#new-task-priority').value;
+        
+            projectsCopy = getProjects(projectName);
             
-            displayTasks(projects[currentProject]);
+            if(projectName === 'Inbox' || 
+                projectName === 'Today' || 
+                projectName  === 'Upcoming'){
+                    console.log(newName);
+
+                    projectsCopy.tasks[taskId].title = newName;
+                    projectsCopy.tasks[taskId].description = newDescription;
+                    projectsCopy.tasks[taskId].dueDate = newDate;
+                    projectsCopy.tasks[taskId].priority = newPriority;
+
+                    displayTasks(projectsCopy);
+
+                } else {
+                    projectsCopy.tasks[taskId].title = newName;
+                    projectsCopy.tasks[taskId].description = newDescription;
+                    projectsCopy.tasks[taskId].dueDate = newDate;
+                    projectsCopy.tasks[taskId].priority = newPriority;
+                    displayTasks(projectsCopy);
+                }
+                
+                updateProjects(projectsCopy);
+            
         }
         
     })
@@ -229,18 +289,38 @@ function addProjectInterfaceToggle(){
 
 function addProjectSubmitListener(){
     const submitButton = document.querySelector('.submit-project-button');
+    const errorMessage = document.querySelector('.add-project-interface > .error-message');
+    let projects = getProjects('all');
 
     submitButton.onclick = () => {
         const projectName = document.querySelector('#project-name');
         
         //Display error message
         if(projectName.value){
+
+            let uniqueName = true;
+
+            projects.forEach(project => {
+                if(project.name === projectName.value){          
+                    uniqueName = false;   
+                }
+            });
+
+            if(!uniqueName){
+                projectName.value = '';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
             let newProject = new Project(projectName.value);
+
+            displayTasks(getProjects(projectName.value));
+            
             projectName.value = '';
-            displayTasks(newProject);
+            submitButton.disabled = 'true';
+
             toggleProjectForm('hide');
             createProjectList('reset');
-            submitButton.disabled = 'true';
         }
     }
 }
@@ -251,36 +331,44 @@ function addRemoveProjectListeners(){
 
    for (let i = 0; i < removeButtons.length; i++) {
         const button = removeButtons[i];
+
+        let projectsCopy = getProjects('all');
         let projectName = projectList[i].childNodes[0].innerText;
         let projectIndex = getProjectIndex(projectName);
 
         button.onclick = (e) => {
-
             //Prevent addProjectItemListeners from bubbling
             e.stopPropagation();
-            projects.splice(projectIndex, 1);
-            createProjectList('reset');
-            displayTasks(Inbox);
+
+            projectsCopy.splice(projectIndex, 1);
+
+            if(projectsCopy[0]){
+                removeProject(projectName);
+                createProjectList('reset');
+            } else {
+                localStorage.removeItem('projects');
+                createProjectList('clear');
+            }
+            
+            console.log(JSON.parse(localStorage.getItem('projects')));
+            displayTasks(JSON.parse(localStorage.getItem('Inbox')));
         }
     
    }
 }
 
 function addProjectItemListeners(){
-    
     const projectList = document.querySelectorAll('.projects-container > .project-listing');
-
     projectList.forEach((projectItem) => {
 
         //Get paragraph node
         let projectName = projectItem.childNodes[0].innerText;
-        let projectIndex = getProjectIndex(projectName);
- 
-         projectItem.onclick = () => {
-            displayTasks(projects[projectIndex]);
-            toggleTaskForm('hide');
-            toggleProjectForm('hide');
-            toggleEditTaskContainers();
+            projectItem.onclick = () => {
+                displayTasks(getProjects(projectName));
+                
+                toggleTaskForm('hide');
+                toggleProjectForm('hide');
+                toggleEditTaskContainers();
          }
      });
  
@@ -311,68 +399,74 @@ function enableSubmitButtonListeners(){
 }
 
 function addUpcomingListeners(){
+    let projectsCopy;
+    let inbox;
+    
     const todayListing = document.querySelector('.top-sidebar > li:nth-child(2)');
 
     todayListing.onclick = () => {
-        Today.tasks.resetList();
+        let today = getProjects('Today');
+        inbox = getProjects('Inbox');
+        today.resetList();
 
-        projects.forEach((project) => {
-            if(project.name === 'Today' || project.name === 'Upcoming'){
-                return;
-            }
-            project.tasks.list.forEach((task) => {
-               if(isToday(new Date(task.dueDate))){
-                    let taskCopy = task;
-                    taskCopy.projectName = task.project;
-                    Today.tasks.add(taskCopy);
-               }
-            })
-        });
+        if(localStorage.getItem('projects') || inbox.tasks){
+            projectsCopy = getProjects('all');
+            projectsCopy.push(inbox);
 
-        displayTasks(Today);
+            projectsCopy.forEach(project => {
+
+                project.tasks.forEach(task => {
+                   if(isToday(new Date(task.dueDate))){
+                        let taskCopy = task;
+                        taskCopy.projectName = task.project;
+                        today.add(taskCopy);
+                   }
+                })
+            });
+            localStorage.setItem('Today', JSON.stringify(today));
+
+        }
+             
+        displayTasks(getProjects('Today'));
+
         toggleTaskForm('hide');
         toggleProjectForm('hide');
         toggleAddTaskButton();
     }
 
+    
     const upcomingListing = document.querySelector('.top-sidebar > li:nth-child(3)');
 
     upcomingListing.onclick = () => {
-        Upcoming.tasks.resetList();
+        let upcoming = getProjects('Upcoming');
+        inbox = getProjects('Inbox');
+        upcoming.resetList();
 
-        projects.forEach((project) => {
-            if(project.name === 'Upcoming' || project.name === 'Today'){
-                return;
-            }
-            project.tasks.list.forEach((task) => {
-               if(isThisWeek(new Date(task.dueDate))){
-                    let taskCopy = task;
-                    taskCopy.projectName = task.project;
-                    Upcoming.tasks.add(taskCopy);
-               }
-            })
-        });
+        if(localStorage.getItem('projects') || inbox.tasks){
+            projectsCopy = getProjects('all');
+            projectsCopy.push(inbox);
 
-        displayTasks(Upcoming);
+            projectsCopy.forEach(project => {
+
+                project.tasks.forEach(task => {
+                if(isThisWeek(new Date(task.dueDate))){
+                        let taskCopy = task;
+                        taskCopy.projectName = task.project;
+                        upcoming.add(taskCopy);
+                }
+                })
+            });
+
+            localStorage.setItem('Upcoming', JSON.stringify(upcoming));
+
+        }   
+
+        displayTasks(getProjects('Upcoming'));
+
         toggleTaskForm('hide');
         toggleProjectForm('hide');
         toggleAddTaskButton();
     }
-    
-   
-}
-
-function getProjectIndex(projectName){
-    //Will be the default name used if no parameter is passed
-    const currentProjectName = document.querySelector('.tasks').getAttribute('data-project-name');
-    
-    let projectIndex = projects.findIndex((project) => {
-        if(projectName){
-            return projectName === project.name;
-        } else {
-            return currentProjectName === project.name;        }
-    });
-
-    return projectIndex;
+      
 }
 
