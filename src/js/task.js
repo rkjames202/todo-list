@@ -1,6 +1,6 @@
 export default task;
 
-function task(title,
+function task(title = 'Untitled Task',
              description,
              dueDate,
              priority,
