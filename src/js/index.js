@@ -5,14 +5,11 @@ import { initializeDefaultProjects } from './project';
 
 /**
  * commit
- * Style page, commit often
+ * clean up/comment code
+ * clean up/comment css
  * push project
  */
 
-function main(){
-}
-
-main();
 initializeDefaultProjects();
 renderUI();
 addEventListeners();
