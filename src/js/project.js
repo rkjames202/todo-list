@@ -51,8 +51,6 @@ function updateProjects(projectCopy){
 function removeProject(projectName){
     let projects = getProjects('all');
 
-    console.log(projectName);
-
     let newProjects = projects.filter(project => {
         return project.name !== projectName
     });
