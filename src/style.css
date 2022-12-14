@@ -450,7 +450,6 @@ button[class*='cancel']{
 .modal-header{
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
     height: 60px;
     background-color: rgb(135, 224, 224);
     padding: 4px 10px;
