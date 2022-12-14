@@ -163,9 +163,11 @@ function getProjectIndex(projectName){
  * @returns none
  */
 function initializeDefaultProjects(){
+
+    let condition = localStorage.getItem('visited');
     
-    if(localStorage.getItem('visited') === false){
-        
+    //If this is the user's first time visiting webpage
+    if(!condition){
         localStorage.setItem('Inbox', JSON.stringify(new Project('Inbox')));
         localStorage.setItem('Today', JSON.stringify(new Project('Today')));
         localStorage.setItem('Upcoming', JSON.stringify(new Project('Upcoming')));
@@ -174,7 +176,7 @@ function initializeDefaultProjects(){
 
     } 
 
-    localStorage.setItem('visited', 0);
+    localStorage.setItem('visited', 1);
 
 }
 
