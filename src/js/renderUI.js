@@ -4,8 +4,14 @@ export { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, c
 import { addTaskRemoveListener, addProjectListeners, addEditTaskListener, addSaveEditTaskListener, addCancelEditTaskListener, addModalListeners } from "./listeners";
 import { getProjects } from "./project";
 import { format, parseJSON } from "date-fns";
+import Icon from '../clipboard.png';
 
+/**
+ * Renders User Interface
+ */
 function renderUI(){
+    renderTabIcon();
+
     const body = document.querySelector('body');
     body.appendChild(createHeaderBar());
     
@@ -14,15 +20,36 @@ function renderUI(){
 
     content.appendChild(createSidebar());
     content.appendChild(createModal());
+
     mainContent.appendChild(createTasksContainer());
 
     content.appendChild(mainContent);
     body.appendChild(content);
 
+    //Display Inbox on page load
     displayTasks(getProjects('Inbox'));
 
 }
 
+/**
+ * Renders tab icon
+ */
+function renderTabIcon(){
+    const head = document.querySelector('head');
+    const icon = document.createElement('link');
+
+    icon.rel = 'icon';
+    //Use file path from Icon module
+    icon.href = Icon;
+
+    head.appendChild(icon);
+}
+
+/**
+ * Creates header bar
+ * 
+ * @returns header div
+ */
 function createHeaderBar(){
     const headerBar = document.createElement('div');
     headerBar.classList.add('header-bar');
@@ -36,6 +63,11 @@ function createHeaderBar(){
     return headerBar;
 }
 
+/**
+ * Creates content container
+ * 
+ * @returns content div
+ */
 function createContent(){
     const content = document.createElement('div');
     content.setAttribute('id', 'content');
@@ -43,6 +75,11 @@ function createContent(){
     return content;
 }
 
+/**
+ * Creates div for main content
+ * 
+ * @returns mainContent div
+ */
 function createMainContent(){
     const mainContent = document.createElement('div');
     mainContent.classList.add('main-content');
@@ -50,14 +87,22 @@ function createMainContent(){
     return mainContent;
 }
 
+/**
+ * Creates sidebar for project listings
+ * 
+ * @returns sidebar containing all projects
+ */
 function createSidebar(){
+    //Default projects
     let topContent = ['Inbox', 'Today', 'Upcoming'];
+
     const sideBar = document.createElement('div');
     sideBar.classList.add('sidebar');
 
     const topList = document.createElement('ul');
     topList.classList.add('top-sidebar');
 
+    //Adds each default project to the top of the list
     for(let i = 0; i < 3; i++){
         const listItem = document.createElement('li');
         listItem.innerText = topContent[i];
@@ -72,6 +117,7 @@ function createSidebar(){
 
     sideBar.appendChild(topList);
 
+    //Bottom list components
     const bottomList = document.createElement('div');
     bottomList.classList.add('bottom-sidebar');
 
@@ -85,6 +131,7 @@ function createSidebar(){
 
     bottomList.appendChild(bottomHeader);
 
+    //Project button components
     const addProjectButton = document.createElement('button');
     addProjectButton.classList.add('add-project-button');
     
@@ -95,6 +142,7 @@ function createSidebar(){
 
     bottomHeader.appendChild(addProjectButton);
 
+    //Project interface components
     const addProjectInterface = document.createElement('div');
     addProjectInterface.classList.add('add-project-interface');
 
@@ -120,7 +168,7 @@ function createSidebar(){
     projectFormButtons.appendChild(cancelButton);
 
     addProjectInterface.appendChild(projectFormButtons);
-
+    
     const errorMessage = document.createElement('p');
     errorMessage.classList.add('error-message');
     errorMessage.innerText = '*Project names must be unique.';
@@ -128,12 +176,13 @@ function createSidebar(){
 
     bottomList.appendChild(addProjectInterface);
 
-
+    //Container for project listing
     const projectsContainer = document.createElement('div');
     projectsContainer.classList.add('projects-container');
 
     let projectList = createProjectList();
 
+    //Add project listings to container
     if(projectList){
         projectList.forEach((project) => {
             projectsContainer.appendChild(project);
@@ -147,7 +196,14 @@ function createSidebar(){
     return sideBar;
 }
 
+/**
+ * Creates a container for all task related elements
+ * to go in
+ * 
+ * @returns div that will display tasks
+ */
 function createTasksContainer(){
+
     //Includes tasks and add task interface
     const tasksDisplay = document.createElement('div');
     tasksDisplay.classList.add('tasks-display');
@@ -157,12 +213,18 @@ function createTasksContainer(){
 
     tasksDisplay.appendChild(tasks);
 
+    //Adds add task interface to task display
     tasksDisplay.appendChild(createTaskInterface());
 
     return tasksDisplay;
 
 }
 
+/**
+ * Creates a form for user to add new tasks
+ * 
+ * @returns add task interface
+ */
 function createTaskInterface(){
     const addTaskInterface = document.createElement('div');
     addTaskInterface.classList.add('add-task-interface');
@@ -170,6 +232,7 @@ function createTaskInterface(){
     const taskForm = document.createElement('div');
     taskForm.classList.add('add-task-form');
 
+    //Task form elements
     const taskName = document.createElement('input');
     taskName.id = 'task-name';
     taskName.placeholder = 'Task name';
@@ -191,15 +254,20 @@ function createTaskInterface(){
     const taskPriority = document.createElement('select');
     taskPriority.id = 'task-priority';
 
+    //Array containing colored circles in unicode for each priority
     let priorityColors = ['\uD83D\uDD34', 
                          '\uD83D\uDFE1',
                          '\uD83D\uDD35',
                          '\u26AA'];
+    
+
+    //Creates options for <select> element and adds colored circles to them
     for(let i = 1; i < 5; i++){
         const priorityOption = document.createElement('option');
         priorityOption.innerText = `${priorityColors[i-1]} Priority ${i}`
         priorityOption.value = i;
 
+        //Priority 1 selected by default
         if(i == 1){priorityOption.selected = true}
 
         taskPriority.appendChild(priorityOption);
@@ -207,6 +275,7 @@ function createTaskInterface(){
 
     taskForm.appendChild(taskPriority);
 
+    //Buttons for add task form
     const buttonContainer = document.createElement('div');
     buttonContainer.classList.add('task-button-container');
 
@@ -222,7 +291,8 @@ function createTaskInterface(){
     buttonContainer.appendChild(taskCancelButton);
 
     taskForm.appendChild(buttonContainer);
-
+    
+    //Button to display add-task-form
     const taskButton = document.createElement('button');
     taskButton.classList.add('add-task-button');
     taskButton.innerText = 'Add Task';
@@ -234,26 +304,34 @@ function createTaskInterface(){
 }
 
 /**
+ * Displays the tasks of any given object
  * 
- * Add buttons to each task item to edit task 
+ * @param {object} project - Project that will have their tasks displayed
  */
 function displayTasks(project){
     
     const tasksContainer = document.querySelector('.tasks');
+    //Clear container
     tasksContainer.replaceChildren();
-    //Use this when editing tasks in a list
+    //Store this project's name 
     tasksContainer.setAttribute('data-project-name', project.name);
 
-    //Display project name on top of list
+    //Display project name 
     const projectTitle = document.createElement('p');
     projectTitle.innerText = project.name;
     tasksContainer.appendChild(projectTitle);
 
+        //Display each task inside of project
         project.tasks.forEach((task, index) => {
+
             const currentTask = document.createElement('div');
             currentTask.classList.add('task-container');
             currentTask.setAttribute('data-task-id', index);
-            //Project task belongs to
+
+            /**
+             * If viewing one of the two 'Upcoming' projects, the original
+             * project of the task is displayed
+            */
             if(project.name === 'Today' || project.name === 'Upcoming'){
                 const projectName = document.createElement('p');
                 projectName.classList.add('upcoming-project-name');
@@ -262,6 +340,7 @@ function displayTasks(project){
                 currentTask.appendChild(projectName);
             }
 
+            //All task information
             const taskInfo = document.createElement('div');
             taskInfo.classList.add('task-info');
 
@@ -271,6 +350,8 @@ function displayTasks(project){
             taskTitle.innerText = task.title;
             taskInfo.appendChild(taskTitle);
 
+            //If statements for description and date since they are optional 
+
             //Task description
             if(task.description){
                 const taskDescription = document.createElement('p');
@@ -279,7 +360,7 @@ function displayTasks(project){
                 taskInfo.appendChild(taskDescription);
             }      
 
-            //Task due date, if statement to prevent default 12/31/1969 from showing
+            //Task due date, if statement to prevent default '12/31/1969' from showing
             if(task.dueDate){
                 const taskDueDate = document.createElement('p');
                 taskDueDate.classList.add('task-date');
@@ -288,10 +369,12 @@ function displayTasks(project){
                 taskInfo.appendChild(taskDueDate);
             }
             
+            //Set appropriate border color depending on priority
             currentTask.style['border-left'] = `5px solid var(--priority-${task.priority}-color)`;
             
             currentTask.appendChild(taskInfo);
 
+            //Task Buttons
             const taskButtons = document.createElement('div');
             taskButtons.classList.add('task-buttons');
             
@@ -324,7 +407,8 @@ function displayTasks(project){
             tasksContainer.appendChild(currentTask);
 
         });
-
+    
+    //Add listeners for task container components
     addTaskRemoveListener();
     addEditTaskListener();
     addSaveEditTaskListener();
@@ -332,6 +416,12 @@ function displayTasks(project){
     addModalListeners();
 }
 
+/**
+ * Creates a list of user created project listings
+ * 
+ * @param {string} option - Either 'reset' or 'clear' list 
+ * @returns 
+ */
 function createProjectList(option){
     const projectsContainer = document.querySelector('.projects-container');
 
@@ -339,9 +429,11 @@ function createProjectList(option){
     let projectsCopy;
     
     if(localStorage.getItem('projects')){
+        //Get all user created projects
         projectsCopy = getProjects('all');
 
     } else if (option === 'clear'){
+        //Clear container
         projectsContainer.replaceChildren();
         return;
 
@@ -365,6 +457,7 @@ function createProjectList(option){
         projectList.push(projectListing);
     });
 
+    //Used if any new projects are added
     if(option === 'reset'){
         projectsContainer.replaceChildren();
 
@@ -381,10 +474,17 @@ function createProjectList(option){
     
 }
 
+/**
+ * Creates an edit interface for a task.
+ * 
+ * @param {object} task - Task object
+ * @returns 
+ */
 function createEditTaskInterface(task){
     const editTaskContainer = document.createElement('div');
     editTaskContainer.classList.add('edit-task-container');
 
+    //Form elements
     const newName = document.createElement('input');
     newName.setAttribute('id', 'new-task-name');
     newName.placeholder = 'Task name';
@@ -401,26 +501,32 @@ function createEditTaskInterface(task){
     newDate.setAttribute('id', 'new-task-date');
     newDate.type = 'date';
 
+    //If task has a due date, display it as a value
     if(task.dueDate) {
         newDate.value = format(parseJSON(task.dueDate), 'yyyy-MM-dd')
     };
 
     const newPriority = document.createElement('select');
     newPriority.setAttribute('id', 'new-task-priority');
+
     let priorityColors = ['\uD83D\uDD34', 
                          '\uD83D\uDFE1',
                          '\uD83D\uDD35',
                          '\u26AA'];
+    
+    //Adds colored circles to select options
     for(let i = 1; i < 5; i++){
         const option = document.createElement('option');
         option.innerText = `${priorityColors[i-1]} Priority ${i}`;
         option.value = i;
 
+        //Selects the current priority of task
         if(i == task.priority){option.selected = true}
 
         newPriority.appendChild(option);
     }
 
+    //Edit task buttons
     const editTaskButtons = document.createElement('div');
     editTaskButtons.classList.add('edit-task-buttons');
 
@@ -443,6 +549,11 @@ function createEditTaskInterface(task){
     return editTaskContainer;
 }
 
+/**
+ * Shows or hides a task form and add task button
+ * 
+ * @param {string} option - To either 'show' or 'hide' form 
+ */
 function toggleTaskForm(option){
     const taskButton = document.querySelector('.add-task-button');
     const taskForm = document.querySelector('.add-task-form');
@@ -456,6 +567,11 @@ function toggleTaskForm(option){
     }
 }
 
+/**
+ * Shows or hides project form and add project button
+ * 
+ * @param {string} option - To either 'show' or 'hide' form
+ */
 function toggleProjectForm(option){
     const projectButton = document.querySelector('.add-project-button');
     const projectForm = document.querySelector('.add-project-interface');
@@ -469,22 +585,41 @@ function toggleProjectForm(option){
     }
 }
 
-function toggleAddTaskButton(){
+/**
+ * Shows or hides add task button
+ * 
+ * @param {string} option To either 'show' or 'hide' button
+ */
+function toggleAddTaskButton(option){
     const addTaskButton = document.querySelector('.add-task-button');
 
-    addTaskButton.style.display = 'none';
+    if(option === 'show'){
+        addTaskButton.style.display = 'block';
+    } else if (option === 'hide'){
+        addTaskButton.style.display = 'none';
+    }
 }
 
+/**
+ * Creates modal
+ * 
+ * @returns modal
+ */
 function createModal(){
     const modal = document.createElement('div');
     modal.classList.add('modal');
 
+    //Content container inside of modal
     const modalContent = document.createElement('div');
     modalContent.classList.add('modal-content');
 
+    //All components inside of content container 
+
+    //Header
     const modalHeader = document.createElement('div');
     modalHeader.classList.add('modal-header');
 
+    //Close button
     const closeButtonContainer = document.createElement('div');
     closeButtonContainer.classList.add('close-button-container');
     modalHeader.appendChild(closeButtonContainer);
@@ -493,14 +628,16 @@ function createModal(){
     closeButton.innerText = 'X';
     closeButtonContainer.appendChild(closeButton);
 
+    //Header title
     const modalHeaderTitle = document.createElement('p');
     modalHeaderTitle.innerText = 'Task-Info';
     modalHeader.appendChild(modalHeaderTitle);
 
+    //Task information
     const modalTaskInfo = document.createElement('div');
     modalTaskInfo.classList.add('modal-task-info');
 
-    //Task project
+    //Project task belongs to
     const taskProjectContainer = document.createElement('div');
     taskProjectContainer.classList.add('modal-project-container');
 
@@ -603,47 +740,62 @@ function createModal(){
     return modal;
 }
 
+/**
+ * Hides modal
+ */
 function hideModal(){
     const modal = document.querySelector('.modal');
 
     modal.style.display = 'none'
 }
 
+/**
+ * Shows modal with appropriate task information
+ */
 function showModal(){
     const modal = document.querySelector('.modal');
+    //All task information
     const project = document.querySelector('.modal-project');
     const title = document.querySelector('.modal-title');
     const description = document.querySelector('.modal-description');
     const date = document.querySelector('.modal-date');
     const priority = document.querySelector('.modal-priority');
-
+    
+    //Project name and ID
     const projectName = document.querySelector('.tasks').getAttribute('data-project-name');
     const taskId = this.parentNode.parentNode.getAttribute('data-task-id');
-   
+
+    //Get task
     let task = getProjects(projectName).tasks[taskId];
     
+    //Set project and title
     project.innerText = task.project;
     title.innerText = task.title;
 
+    //Set the description if there is one
     if(task.description){
         description.innerText = task.description;
     } else {
         description.innerText = 'N/A';
     }
 
+    //Set the date if there is one
     if(task.dueDate){
         date.innerText = format(parseJSON(task.dueDate), 'MMM do, yyyy');
     } else {
         date.innerText = 'N/A';
     }
 
+    //Colored circles for corresponding priority 
     let priorityColors = ['\uD83D\uDD34', 
                          '\uD83D\uDFE1',
                          '\uD83D\uDD35',
                          '\u26AA'];
     
+    //Set priority
     priority.innerText = `${priorityColors[task.priority - 1]} ${task.priority}`;
 
+    //Display modal
     modal.style.display = 'flex';
 
 }

@@ -4,12 +4,12 @@ import {default as addEventListeners} from './listeners';
 import { initializeDefaultProjects } from './project';
 
 /**
- * commit
  * clean up/comment code
  * clean up/comment css
  * push project
  */
 
+/**All functions required on page load*/
 initializeDefaultProjects();
 renderUI();
 addEventListeners();
