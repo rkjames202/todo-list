@@ -1,9 +1,8 @@
 
 import Project from "./project";
 import task from "./task";
-import { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, createProjectList, showModal, hideModal } from "./renderUI";
+import { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, toggleEditTaskContainers,createProjectList, showModal, hideModal } from "./renderUI";
 import { getProjects, updateProjects, getProjectIndex, removeProject} from "./project";
-import { initializeMethods } from "./list";
 import { isToday, isThisWeek } from 'date-fns'
 
 export default addEventListeners;
@@ -226,7 +225,7 @@ function addCancelEditTaskListener(){
             
             //Show task info and task buttons
             const taskInfo = document.querySelector(`.task-container[data-task-id = "${taskId}"] > .task-info`);
-            taskInfo.style.display = 'block';
+            taskInfo.style.display = 'flex';
 
             const taskButtons = document.querySelector(`.task-container[data-task-id = "${taskId}"] > .task-buttons`);
             taskButtons.style.display = 'block';
@@ -236,38 +235,6 @@ function addCancelEditTaskListener(){
             editContainer.style.display = 'none';    
         }
     });
-}
-
-/**
- * Will hide every edit task container except for the
- * one passed as a parameter
- * 
- * @param {node} thisContainer 
- */
-function toggleEditTaskContainers(thisContainer){
-    //If no argument is passed, all edit task container are hidden
-    const allTaskContainers = document.querySelectorAll('.edit-task-container');
-
-    allTaskContainers.forEach((container) => {
-        if(container !== thisContainer){
-            //Get the task id associated with the container
-            let thisTaskId = container.parentNode.getAttribute('data-task-id');
-            //Get the task info and buttons using the task id
-            let thisTaskInfo = document.querySelector(`.task-container[data-task-id="${thisTaskId}"] > .task-info`);
-            let thisTaskButtons = document.querySelector(`.task-container[data-task-id="${thisTaskId}"]  .task-buttons`);
-
-            //Show the task info and buttons
-            thisTaskInfo.style.display = 'flex';
-            thisTaskButtons.style.display = 'block';
-
-            //Hide the edit container
-            container.style.display = 'none';
-
-        } else {
-            //If the container matches the one in the parameter, show it
-            container.style.display = 'block';
-        }
-    })
 }
 
 /**

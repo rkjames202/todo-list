@@ -1,10 +1,11 @@
 export default renderUI;
-export { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, createProjectList, showModal, hideModal};
+export { displayTasks, toggleTaskForm, toggleAddTaskButton, toggleProjectForm, toggleEditTaskContainers, createProjectList, showModal, hideModal};
 
 import { addTaskRemoveListener, addProjectListeners, addEditTaskListener, addSaveEditTaskListener, addCancelEditTaskListener, addModalListeners } from "./listeners";
 import { getProjects } from "./project";
 import { format, parseJSON } from "date-fns";
 import Icon from '../clipboard.png';
+import task from "./task";
 
 /**
  * Renders User Interface
@@ -478,7 +479,7 @@ function createProjectList(option){
  * Creates an edit interface for a task.
  * 
  * @param {object} task - Task object
- * @returns 
+ * @returns - Edit task container for task
  */
 function createEditTaskInterface(task){
     const editTaskContainer = document.createElement('div');
@@ -558,9 +559,21 @@ function toggleTaskForm(option){
     const taskButton = document.querySelector('.add-task-button');
     const taskForm = document.querySelector('.add-task-form');
 
+    const taskName = document.querySelector('#task-name');
+    const taskDescription = document.querySelector('#task-description');
+    const taskDate = document.querySelector('#task-date');
+    const taskPriority = document.querySelector('#task-priority');
+    const selectedPriority = taskPriority.querySelector('option[value="1"]');
+
     if(option === 'hide'){
+        taskName.value = '';
+        taskDescription.value = '';
+        taskDate.value = '';
+        selectedPriority.selected = true;
+
         taskForm.style.display = 'none'; 
         taskButton.style.display = 'block';
+
     }else if (option === 'show'){
         taskForm.style.display = 'block';
         taskButton.style.display = 'none';
@@ -576,7 +589,11 @@ function toggleProjectForm(option){
     const projectButton = document.querySelector('.add-project-button');
     const projectForm = document.querySelector('.add-project-interface');
 
+    const projectName = document.querySelector('#project-name');
+
     if(option === 'hide'){
+        projectName.value = '';
+
         projectForm.style.display = 'none'; 
         projectButton.style.display = 'block';
     }else if (option === 'show'){
@@ -584,6 +601,67 @@ function toggleProjectForm(option){
         projectButton.style.display = 'none';
     }
 }
+
+/**
+ * Will hide every edit task container except for the
+ * one passed as a parameter
+ * 
+ * @param {node} thisContainer 
+ */
+function toggleEditTaskContainers(thisContainer){
+    //If no argument is passed, all edit task container are hidden
+    const allTaskContainers = document.querySelectorAll('.edit-task-container');
+  
+    allTaskContainers.forEach((container) => {
+        if(container !== thisContainer){
+            //Get the task id associated with the container
+            let thisTaskId = container.parentNode.getAttribute('data-task-id');
+            //Get the task info and buttons using the task id
+            
+            const thisTaskContainer = document.querySelector(`.task-container[data-task-id="${thisTaskId}"]`);
+            const thisTaskInfo = thisTaskContainer.querySelector(`.task-info`);
+            const thisTaskButtons = thisTaskContainer.querySelector(`.task-buttons`);
+
+            //Show the task info and buttons
+            thisTaskInfo.style.display = 'flex';
+            thisTaskButtons.style.display = 'block';
+
+            //Hide the edit container
+            container.style.display = 'none';
+
+        } else {
+            let thisTaskId = container.parentNode.getAttribute('data-task-id');
+
+            //Get the task info and buttons using the task id
+            const thisTaskContainer = document.querySelector(`.task-container[data-task-id="${thisTaskId}"]`);
+            const thisEditTaskContainer = thisTaskContainer.querySelector('.edit-task-container');
+
+            const projectName = document.querySelector('.tasks').getAttribute('data-project-name');
+            let projectCopy = getProjects(projectName);
+            let taskCopy = projectCopy.tasks[thisTaskId];
+
+            //Edit form values
+            const taskName = thisEditTaskContainer.querySelector('#new-task-name');
+            const taskDescription = thisEditTaskContainer.querySelector('#new-task-description');
+            const taskPriority = thisEditTaskContainer.querySelector('#new-task-priority');
+            
+            taskName.value = taskCopy.title;
+            taskDescription.value = taskCopy.description;
+            if(taskCopy.date){
+                const taskDate = thisEditTaskContainer.querySelector('#new-task-date');
+                taskDate.value = format(new Date(taskCopy.dueDate), 'yyyy-MM-dd');
+            }
+            
+            const priorityOption = taskPriority.querySelector(`option[value="${taskCopy.priority}"`);
+
+            priorityOption.selected = true;
+
+            //If the container matches the one in the parameter, show it
+            container.style.display = 'block';
+        }
+    })
+}
+
 
 /**
  * Shows or hides add task button
